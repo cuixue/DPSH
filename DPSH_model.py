@@ -17,17 +17,8 @@ class model(object):
         U0 = net['fc8']
         theta = tf.mul(1.0 / 2, tf.matmul(U0, tf.transpose(Ux)))
         B_code = tf.sign(U0)
-        theta_ = logExpTrick(theta)
         loss = tf.div(
-            (- 2.0 * tf.reduce_sum(tf.mul(S, theta) - theta_)) + config.lamda * tf.reduce_sum(tf.pow((B_code - U0), 2)),
+            (- 2.0 * tf.reduce_sum(tf.mul(S, theta) - (tf.max(0,theta)+tf.log(tf.exp(tf.abs(-theta))+1)))) + config.lamda * tf.reduce_sum(tf.pow((B_code - U0), 2)),
             float(config.N_size*config.batch_size))
 
         self.train_step = tf.train.GradientDescentOptimizer(lrx).minimize(loss)
-
-def logExpTrick(X):
-    Y = X
-    X = tf.reshape(X, [-1])
-    dx = X < 30
-    Z = tf.select(dx, tf.reshape(tf.log(1 + tf.exp(X)), [-1]), X)
-
-    return tf.reshape(Z, tf.shape(Y))
